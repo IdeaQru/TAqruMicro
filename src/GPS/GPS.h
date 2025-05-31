@@ -1,22 +1,27 @@
 #ifndef GPS_H
 #define GPS_H
 
-#include <Arduino.h>
+#include <TinyGPSPlus.h>
 #include <SoftwareSerial.h>
 
 class GPS {
 public:
+    // Konstruktor untuk menginisialisasi pin RX dan TX
     GPS(uint8_t rxPin, uint8_t txPin);
-    void begin(unsigned long baud = 9600);
+
+    // Memulai komunikasi GPS dengan baud rate
+    void begin(unsigned long baud);
+
+    // Membaca data GPS
     bool readData();
-    String getLatitude() const;
-    String getLongitude() const;
+
+    // Mendapatkan latitude dan longitude
+    String getLatitude();
+    String getLongitude();
 
 private:
-    SoftwareSerial gpsSerial;
-    String latitude;
-    String longitude;
-    void parseNMEA(String &nmea);
+    TinyGPSPlus gps;          // Objek dari TinyGPS++ untuk parsing data GPS
+    SoftwareSerial gpsSerial; // Objek SoftwareSerial untuk komunikasi GPS
 };
 
-#endif
+#endif // GPS_H

@@ -19,16 +19,16 @@ bool HMC5883L::begin(uint8_t sda_pin, uint8_t scl_pin, Gain gain) {
     Wire.setClock(400000);
     
     // Verify connection
-    Wire.beginTransmission(0x1E);
+    Wire.beginTransmission(0x0D); // Alamat I2C HMC5883L yang Anda gunakan
     if(Wire.endTransmission() != 0) return false;
     
     // Set initial configuration
     setGain(gain);
     
     // Set measurement mode
-    Wire.beginTransmission(0x1E);
+    Wire.beginTransmission(0x0D); // Alamat I2C HMC5883L yang Anda gunakan
     Wire.write(0x02); // Mode register
-    Wire.write(0x00); // Continuous measurement
+    Wire.write(0x00); // Continuous measurement mode
     return Wire.endTransmission() == 0;
 }
 
@@ -36,9 +36,9 @@ void HMC5883L::setGain(Gain gain) {
     currentGain = gain;
     
     // Set gain and calculate scale factor
-    Wire.beginTransmission(0x1E);
+    Wire.beginTransmission(0x0D); // Alamat I2C HMC5883L yang Anda gunakan
     Wire.write(0x01); // Configuration register B
-    Wire.write(gain);
+    Wire.write(gain); // Set the gain
     Wire.endTransmission();
     
     // Set scale factors (in mG/LSB)
@@ -53,13 +53,26 @@ void HMC5883L::setGain(Gain gain) {
         case GAIN_8_1:  scaleFactor = 4.35; break;
     }
 }
-
+String HMC5883L::getCardinalDirection(float heading) {
+    // Normalisasi heading ke rentang 0-360 derajat
+    heading = fmod(heading, 360.0);
+    if(heading < 0) heading += 360.0;
+    
+    // Tentukan sektor 45 derajat dengan offset 22.5 derajat
+    int sector = static_cast<int>((heading + 22.5) / 45.0) % 8;
+    
+    // Mapping ke arah mata angin
+    const String directions[] = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"};
+    return directions[sector];
+}
 bool HMC5883L::read() {
-    Wire.beginTransmission(0x1E);
-    Wire.write(0x03); // Start at data register
+    Wire.beginTransmission(0x0D); // Alamat I2C HMC5883L yang Anda gunakan
+    Wire.write(0x03); // Start at data register (XMSB)
     if(Wire.endTransmission() != 0) return false;
     
-    if(Wire.requestFrom(0x1E, 6) != 6) return false;
+    if(Wire.requestFrom(0x0D, 6) != 6) { // Alamat yang digunakan 0x0D
+        return false;
+    }
     
     // Read data (order: X, Z, Y)
     rawX = Wire.read() << 8 | Wire.read();

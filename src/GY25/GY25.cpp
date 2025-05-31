@@ -111,25 +111,41 @@ void Gy25::applyCalibration(SensorData &data) {
 }
 
 void Gy25::updateAngles(SensorData &data, float deltaTime) {
-    angles.accRoll = atan2(data.accY, data.accZ) * 180/M_PI;
-    angles.accPitch = atan(-data.accX / sqrt(data.accY*data.accY + data.accZ*data.accZ)) * 180/M_PI;
+    // Hitung sudut accelerometer
+    float accRoll = atan2(data.accY, data.accZ) * 180.0 / M_PI;
+    float accPitch = atan(-data.accX / sqrt(data.accY*data.accY + data.accZ*data.accZ)) * 180.0 / M_PI;
 
+    // Hitung gyro rate
     float gyroX = data.gyroX / 65.5;
     float gyroY = data.gyroY / 65.5;
     float gyroZ = data.gyroZ / 65.5;
 
+    // Update sudut gyro (integrasi)
     angles.gyroRoll += gyroX * deltaTime;
     angles.gyroPitch += gyroY * deltaTime;
     angles.gyroYaw += gyroZ * deltaTime;
 
-    angles.compRoll = COMPLEMENTARY_ALPHA * (angles.compRoll + gyroX * deltaTime) + 
-                     (1 - COMPLEMENTARY_ALPHA) * angles.accRoll;
-    angles.compPitch = COMPLEMENTARY_ALPHA * (angles.compPitch + gyroY * deltaTime) + 
-                      (1 - COMPLEMENTARY_ALPHA) * angles.accPitch;
+    // Filter complementary
+    angles.compRoll = COMPLEMENTARY_ALPHA * (angles.compRoll + gyroX * deltaTime) + (1 - COMPLEMENTARY_ALPHA) * accRoll;
+    angles.compPitch = COMPLEMENTARY_ALPHA * (angles.compPitch + gyroY * deltaTime) + (1 - COMPLEMENTARY_ALPHA) * accPitch;
 
-    angles.kalRoll = kalmanX.update(angles.accRoll, gyroX, deltaTime);
-    angles.kalPitch = kalmanY.update(angles.accPitch, gyroY, deltaTime);
+    // Filter Kalman
+    angles.kalRoll = kalmanX.update(accRoll, gyroX, deltaTime);
+    angles.kalPitch = kalmanY.update(accPitch, gyroY, deltaTime);
+
+    // Hitung error antara accelerometer dan complementary filter
+    float errorRoll = accRoll - angles.compRoll;
+    float errorPitch = accPitch - angles.compPitch;
+
+    // Output PID adaptif untuk koreksi sudut
+    float pidOutputRoll = pidRoll.update(errorRoll, deltaTime);
+    float pidOutputPitch = pidPitch.update(errorPitch, deltaTime);
+
+    // Koreksi sudut dengan output PID
+    angles.compRoll += pidOutputRoll;
+    angles.compPitch += pidOutputPitch;
 }
+
 
 Gy25::Kalman::Kalman(float Q, float R) : Q(Q), R(R), x0(0), x1(0), P00(1), P01(0), P10(0), P11(1) {}
 

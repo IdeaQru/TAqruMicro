@@ -4,10 +4,14 @@
 #include <Wire.h>
 #include <math.h>
 #include <Arduino.h>
+#include "PID.h"
 class Gy25 {
+
 public:
     Gy25(uint8_t address = 0x68);
-    
+    PIDAdaptive pidRoll = PIDAdaptive(1.0, 0.0, 0.0);   
+    PIDAdaptive pidPitch = PIDAdaptive(1.0, 0.0, 0.0);
+    PIDAdaptive pidYaw = PIDAdaptive(1.0, 0.0, 0.0);
     bool begin(int sda_pin, int scl_pin);
     void update();
     void calibrate();
@@ -49,7 +53,7 @@ private:
     Kalman kalmanX, kalmanY;
     uint8_t i2cAddress;
     uint32_t lastUpdate;
-    
+   
     bool initMPU();
     bool readSensor(SensorData &data);
     void applyCalibration(SensorData &data);
@@ -59,5 +63,6 @@ private:
     static constexpr int CALIBRATION_SAMPLES = 2000;
     static constexpr int GYRO_THRESHOLD = 15;
 };
+
 
 #endif
