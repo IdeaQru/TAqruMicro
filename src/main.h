@@ -8,6 +8,8 @@
 // Define pins for GPS SoftwareSerial and I2C
 #define GPS_RX_PIN 16
 #define GPS_TX_PIN 17
+#define GY25_RX_PIN 4
+#define GY25_TX_PIN 2
 #define SDA_PIN 21
 #define SCL_PIN 22
 #define nol 0
@@ -38,6 +40,13 @@ void setupMain()
     Serial.begin(SERIAL_BAUD_RATE);
     Serial1.begin(GPS_BAUD_RATE, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
 
+
+    if (!imu.begin(GY25_RX_PIN, GY25_TX_PIN)) {
+        Serial.println("Gagal inisialisasi komunikasi Serial2!");
+        while (1); // Berhenti jika gagal
+    }
+
+    Serial.println("Mulai membaca data dari GY25...");
     // Initialize components
     if (!imu.begin(SDA_PIN, SCL_PIN))
     {

@@ -44,7 +44,6 @@ void loop()
 {
     updateSensors();
 
-    // Get sensor values
     float roll = imu.getRoll();
     float pitch = imu.getPitch();
     float yaw = imu.getYaw();
