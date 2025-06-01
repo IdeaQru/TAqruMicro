@@ -7,8 +7,11 @@ void DataSender::begin() {
   connectWiFi();
 }
 
+bool DataSender::isConnected() {
+  return WiFi.status() == WL_CONNECTED;
+}
+
 void DataSender::connectWiFi() {
-//   WiFi.mode(WIFI_STA);
   WiFi.begin(_ssid, _password);
 
   Serial.print("Connecting to WiFi");

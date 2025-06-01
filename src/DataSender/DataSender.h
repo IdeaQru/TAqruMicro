@@ -14,12 +14,13 @@
 #include <HTTPClient.h>
 
 class DataSender {
-  public:
+public:
     DataSender(const char* ssid, const char* password, const char* serverUrl);
     void begin();  // Setup WiFi connection
+    bool isConnected(); // Check if WiFi is connected
     void sendData(float roll, float pitch, float yaw, float heading, String cardinalDirection, String latitude, String longitude);
 
-  private:
+private:
     const char* _ssid;
     const char* _password;
     const char* _serverUrl;

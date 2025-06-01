@@ -1,27 +1,18 @@
 #include "GPS.h"
 
-GPS::GPS(uint8_t rxPin, uint8_t txPin) : gpsSerial(rxPin, txPin) {}
+GPS::GPS(int rxPin, int txPin) : gpsSerial(Serial1), latitude(0.0), longitude(0.0) {}
 
-void GPS::begin(unsigned long baud) {
-    gpsSerial.begin(baud); // Memulai komunikasi serial dengan GPS
+void GPS::begin(long baudRate) {
+    gpsSerial.begin(baudRate);
 }
 
-bool GPS::readData() {
+void GPS::update() {
     while (gpsSerial.available() > 0) {
-        Serial.println("GPS available" + String(gpsSerial.read()));
-        gps.encode(gpsSerial.read());  // Memproses data GPS yang diterima
+        if (gps.encode(gpsSerial.read())) {
+            if (gps.location.isValid()) {
+                latitude = gps.location.lat();
+                longitude = gps.location.lng();
+            }
+        }
     }
-
-    // Jika data GPS valid dan ada update
-    return gps.location.isUpdated();
-}
-
-String GPS::getLatitude() {
-    // Mengambil latitude dalam format string dengan 6 digit desimal
-    return String(gps.location.lat(), 6);
-}
-
-String GPS::getLongitude() {
-    // Mengambil longitude dalam format string dengan 6 digit desimal
-    return String(gps.location.lng(), 6);
 }

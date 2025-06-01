@@ -2,67 +2,34 @@
 #define GY25_H
 
 #include <Wire.h>
-#include <math.h>
 #include <Arduino.h>
-#include "PID.h"
-class Gy25 {
+#include <MPU6050_light.h>
 
+class Gy25 {
 public:
     Gy25(uint8_t address = 0x68);
-    PIDAdaptive pidRoll = PIDAdaptive(1.0, 0.0, 0.0);   
-    PIDAdaptive pidPitch = PIDAdaptive(1.0, 0.0, 0.0);
-    PIDAdaptive pidYaw = PIDAdaptive(1.0, 0.0, 0.0);
     bool begin(int sda_pin, int scl_pin);
     void update();
     void calibrate();
     
-    float getRoll() const { return angles.kalRoll; }
-    float getPitch() const { return angles.kalPitch; }
-    float getYaw() const { return angles.gyroYaw; }
+    float getRoll() const { return roll; }
+    float getPitch() const { return pitch; }
+    float getYaw() const { return yaw; }
 
 private:
-    struct SensorData {
-        int16_t accX, accY, accZ;
-        int16_t gyroX, gyroY, gyroZ;
-        float temp;
-    };
-    
-    struct {
-        int16_t accX, accY, accZ;
-        int16_t gyroX, gyroY, gyroZ;
-    } offsets;
-    
-    struct {
-        float accPitch, accRoll;
-        float gyroPitch, gyroRoll, gyroYaw;
-        float kalPitch, kalRoll;
-        float compPitch, compRoll;
-    } angles;
-    
-    class Kalman {
-    public:
-        Kalman(float Q = 0.001, float R = 0.03);
-        float update(float measurement, float rate, float dt);
-        
-    private:
-        float Q, R;
-        float x0, x1;
-        float P00, P01, P10, P11;
-    };
+    MPU6050* mpu; // Menggunakan pointer untuk inisialisasi manual
+    float roll, pitch, yaw;
+    unsigned long lastUpdate;
+    void calculateAngles();
 
-    Kalman kalmanX, kalmanY;
-    uint8_t i2cAddress;
-    uint32_t lastUpdate;
-   
-    bool initMPU();
-    bool readSensor(SensorData &data);
-    void applyCalibration(SensorData &data);
-    void updateAngles(SensorData &data, float deltaTime);
-    
-    static constexpr float COMPLEMENTARY_ALPHA = 0.96;
-    static constexpr int CALIBRATION_SAMPLES = 2000;
-    static constexpr int GYRO_THRESHOLD = 15;
+    // Konstanta dan variabel untuk menghindari angka langsung di .cpp
+    static constexpr uint8_t DEFAULT_I2C_ADDRESS = 0x68;
+    static constexpr int DELAY_INIT_MS = 100;
+    static constexpr int GYRO_RANGE_CONFIG = 0; // ±250 deg/s
+    static constexpr int ACCEL_RANGE_CONFIG = 0; // ±2g
+    static constexpr float COMPLEMENTARY_ALPHA = 0.98;
+    static constexpr float PI_VALUE = 3.14159265359;
+    static constexpr float MICRO_TO_SECONDS = 1000000.0;
 };
-
 
 #endif
