@@ -2,7 +2,6 @@
 #define GPS_H
 
 #include <Arduino.h>
-#include <TinyGPS++.h>
 
 class GPS {
 public:
@@ -11,12 +10,32 @@ public:
     void update();
     float getLatitude() const { return latitude; }
     float getLongitude() const { return longitude; }
+    bool isValid() const { return dataValid; }
+    int getSatellites() const { return satellites; }
+    float getSpeed() const { return speed; }
+    float getAltitude() const { return altitude; }
 
 private:
-    TinyGPSPlus gps;
     HardwareSerial gpsSerial;
     float latitude;
     float longitude;
+    float speed;
+    float altitude;
+    int satellites;
+    bool dataValid;
+    String nmeaBuffer;
+    
+    // NMEA parsing functions
+    void parseNMEA(String sentence);
+    void parseGPGGA(String sentence);
+    void parseGPRMC(String sentence);
+    void parseGPGSA(String sentence);
+    
+    // Utility functions
+    float convertToDecimalDegrees(String coordinate, char direction);
+    bool isValidChecksum(String sentence);
+    String getValue(String data, char separator, int index);
+    int hexCharToInt(char c);
 };
 
 #endif
