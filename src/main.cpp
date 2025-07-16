@@ -101,11 +101,11 @@ void loop()
     float pitch = imu.getPitch();
     float yaw = imu.getYaw();
     float heading = compass.getHeading();
-    String cardinalDir = compass.getCardinalDirection(heading);
+    String cardinalDir = compass.getDirection(heading);
     float latitude = gps.getLatitude();
     float longitude = gps.getLongitude();
 
-    // Check sensor data validity and trigger alert if invalid
+    // // Check sensor data validity and trigger alert if invalid
     if (!checkSensorDataValidity(roll, pitch, yaw, heading, latitude, longitude))
     {
         triggerErrorAlert();

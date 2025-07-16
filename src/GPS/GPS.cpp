@@ -103,24 +103,22 @@ void GPS::parseGPGSA(String sentence) {
 }
 
 float GPS::convertToDecimalDegrees(String coordinate, char direction) {
-    if (coordinate.length() < 4) return 0.0;
-    
-    // Format: DDMM.MMMM or DDDMM.MMMM
-    int dotIndex = coordinate.indexOf('.');
-    if (dotIndex < 0) return 0.0;
-    
-    String degreesStr, minutesStr;
-    
-    if (coordinate.length() >= 10) { // Longitude format DDDMM.MMMM
-        degreesStr = coordinate.substring(0, 3);
-        minutesStr = coordinate.substring(3);
-    } else { // Latitude format DDMM.MMMM
-        degreesStr = coordinate.substring(0, 2);
-        minutesStr = coordinate.substring(2);
+    if (coordinate.length() < 6) return 0.0;
+
+    float degrees = 0.0;
+    float minutes = 0.0;
+
+    if (direction == 'N' || direction == 'S') {
+        // Latitude: 2 digit degrees
+        degrees = coordinate.substring(0, 2).toFloat();
+        minutes = coordinate.substring(2).toFloat();
+    } else if (direction == 'E' || direction == 'W') {
+        // Longitude: 3 digit degrees
+        degrees = coordinate.substring(0, 3).toFloat();
+        minutes = coordinate.substring(3).toFloat();
+    } else {
+        return 0.0;
     }
-    
-    float degrees = degreesStr.toFloat();
-    float minutes = minutesStr.toFloat();
     
     float decimal = degrees + (minutes / 60.0);
     

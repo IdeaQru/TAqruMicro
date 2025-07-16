@@ -20,14 +20,14 @@
 
 // Initialize objects
 Gy25 imu;
-HMC5883LCompass compass;
+HMC5883L compass;
 GPS gps(GPS_RX_PIN, GPS_TX_PIN);
 LCDDisplay lcd(SDA_PIN, SCL_PIN);
 
 // WiFi credentials and backend URL
-const char *ssid = "Uhuyy";
-const char *password = "Jawa1234";
-const char *backendUrl = "http://172.20.10.12:3718/api/datasensor";
+const char *ssid = "NDtechnogy 5G";
+const char *password = "NDtech1234";
+const char *backendUrl = "http://192.168.1.18:3718/api/datasensor";
 
 DataSender dataSender(ssid, password, backendUrl);
 
@@ -162,7 +162,7 @@ void setupMain()
     }
 
     gps.begin(GPS_BAUD_RATE);
-    // dataSender.begin(); // Uncomment if WiFi data sending is needed
+    dataSender.begin(); // Uncomment if WiFi data sending is needed
 
     // Calibrate compass
     Serial.println("Mulai kalibrasi kompas - putar sensor di semua arah");
