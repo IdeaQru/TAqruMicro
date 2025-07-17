@@ -1,5 +1,4 @@
 #include "main.h"
-//fahrul memek
 void setup()
 {
     setupMain();
@@ -7,7 +6,7 @@ void setup()
 
 void updateSensors()
 {
-    imu.update();
+    // imu.update();
     compass.read();
     gps.update();
 }
@@ -16,34 +15,34 @@ void updateSensors()
 bool checkSensorDataValidity(float roll, float pitch, float yaw, float heading, float latitude, float longitude)
 {
     bool isValid = true;
-    
+
     // Check IMU data validity
-    if (isnan(roll) || isnan(pitch) || isnan(yaw) || 
-        roll < -180 || roll > 180 || 
-        pitch < -90 || pitch > 90 || 
-        yaw < -180 || yaw > 180)
-    {
-        Serial.println("ERROR: IMU data invalid!");
-        isValid = false;
-    }
-    
+    // if (isnan(roll) || isnan(pitch) || isnan(yaw) ||
+    //     roll < -180 || roll > 180 ||
+    //     pitch < -90 || pitch > 90 ||
+    //     yaw < -180 || yaw > 180)
+    // {
+    //     Serial.println("ERROR: IMU data invalid!");
+    //     isValid = false;
+    // }
+
     // Check compass data validity
     if (isnan(heading) || heading < 0 || heading > 360)
     {
         Serial.println("ERROR: Compass data invalid!");
         isValid = false;
     }
-    
+
     // Check GPS data validity
-    if (isnan(latitude) || isnan(longitude) || 
-        latitude == 0.0 || longitude == 0.0 ||
-        latitude < -90 || latitude > 90 ||
-        longitude < -180 || longitude > 180)
-    {
-        Serial.println("ERROR: GPS data invalid!");
-        isValid = false;
-    }
-    
+    // if (isnan(latitude) || isnan(longitude) ||
+    //     latitude == 0.0 || longitude == 0.0 ||
+    //     latitude < -90 || latitude > 90 ||
+    //     longitude < -180 || longitude > 180)
+    // {
+    //     Serial.println("ERROR: GPS data invalid!");
+    //     isValid = false;
+    // }
+
     return isValid;
 }
 
@@ -96,11 +95,13 @@ void debugSensorData(float roll, float pitch, float yaw, float heading, String c
 void loop()
 {
     updateSensors();
-    
-    float roll = imu.getRoll();
-    float pitch = imu.getPitch();
-    float yaw = imu.getYaw();
+
+    float roll = compass.getX() * 180.0 / PI / 100000.0;
+    float pitch = compass.getY() * 180.0 / PI / 100000.0;
+    float yaw = compass.getZ() * 180.0 / PI / 100000.0;
     float heading = compass.getHeading();
+    // manipulasi pitch dari heading
+    // float pitchfromheading = heading - 90;
     String cardinalDir = compass.getDirection(heading);
     float latitude = gps.getLatitude();
     float longitude = gps.getLongitude();
@@ -114,8 +115,6 @@ void loop()
     displaySensorData(roll, pitch, yaw, heading, cardinalDir, latitude, longitude);
     sendSensorData(roll, pitch, yaw, heading, cardinalDir, latitude, longitude);
     debugSensorData(roll, pitch, yaw, heading, cardinalDir, latitude, longitude);
-
-   
 
     delay(LOOP_DELAY_MS);
 }

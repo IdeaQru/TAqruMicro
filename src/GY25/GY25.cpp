@@ -1,8 +1,8 @@
-// GY25.cpp
 #include "GY25.h"
 
 Gy25::Gy25(uint8_t address) {
     i2cAddress = address;
+    addressAutoDetected = false;
     roll = pitch = yaw = 0.0;
     accelX = accelY = accelZ = 0;
     gyroX = gyroY = gyroZ = 0;
@@ -17,11 +17,28 @@ Gy25::Gy25(uint8_t address) {
 bool Gy25::begin(int sda_pin, int scl_pin) {
     Wire.begin(sda_pin, scl_pin);
     
-    // Check if device is present
-    uint8_t whoAmI = readRegister(WHO_AM_I);
-    if (whoAmI != 0x68 && whoAmI != 0x72) {
+    // Auto-detect address jika alamat default tidak berfungsi
+    uint8_t detectedAddress = autoDetectAddress();
+    if (detectedAddress != 0) {
+        if (detectedAddress != i2cAddress) {
+            Serial.printf("Auto-detected address: 0x%02X (was 0x%02X)\n", detectedAddress, i2cAddress);
+            i2cAddress = detectedAddress;
+            addressAutoDetected = true;
+        }
+    } else {
+        Serial.println("No MPU6050 device found! Scanning I2C bus...");
+        scanI2CDevices();
         return false;
     }
+    
+    // Check if device is present dengan address yang sudah terdeteksi
+    uint8_t whoAmI = readRegister(WHO_AM_I);
+    if (whoAmI != 0x68 && whoAmI != 0x72) {
+        Serial.printf("Unexpected WHO_AM_I: 0x%02X (expected 0x68 or 0x72)\n", whoAmI);
+        return false;
+    }
+    
+    Serial.printf("MPU6050 found at address 0x%02X, WHO_AM_I: 0x%02X\n", i2cAddress, whoAmI);
     
     // Wake up the MPU6050
     writeRegister(PWR_MGMT_1, 0x00);
@@ -52,6 +69,79 @@ bool Gy25::begin(int sda_pin, int scl_pin) {
     return true;
 }
 
+uint8_t Gy25::autoDetectAddress() {
+    Serial.println("Auto-detecting MPU6050 address...");
+    
+    // Coba address yang diberikan dulu
+    if (testAddress(i2cAddress)) {
+        Serial.printf("Address 0x%02X confirmed\n", i2cAddress);
+        return i2cAddress;
+    }
+    
+    // Jika tidak berhasil, coba address-address yang umum
+    uint8_t possibleAddresses[] = {MPU6050_ADDR_LOW, MPU6050_ADDR_HIGH, 0x6A, 0x6B};
+    
+    for (int i = 0; i < 4; i++) {
+        if (possibleAddresses[i] != i2cAddress) { // Skip address yang sudah dicoba
+            if (testAddress(possibleAddresses[i])) {
+                Serial.printf("Found MPU6050 at address 0x%02X\n", possibleAddresses[i]);
+                return possibleAddresses[i];
+            }
+        }
+    }
+    
+    Serial.println("MPU6050 not found at common addresses");
+    return 0; // Tidak ditemukan
+}
+
+bool Gy25::testAddress(uint8_t address) {
+    // Test basic communication
+    Wire.beginTransmission(address);
+    if (Wire.endTransmission() != 0) {
+        return false;
+    }
+    
+    // Test WHO_AM_I register
+    Wire.beginTransmission(address);
+    Wire.write(WHO_AM_I);
+    if (Wire.endTransmission() != 0) {
+        return false;
+    }
+    
+    Wire.requestFrom(address, (uint8_t)1);
+    if (Wire.available()) {
+        uint8_t whoAmI = Wire.read();
+        // Check for valid WHO_AM_I values
+        if (whoAmI == 0x68 || whoAmI == 0x72) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+void Gy25::scanI2CDevices() {
+    Serial.println("Scanning I2C bus for devices...");
+    
+    int deviceCount = 0;
+    for (byte address = 1; address < 127; address++) {
+        Wire.beginTransmission(address);
+        if (Wire.endTransmission() == 0) {
+            Serial.print("I2C device found at address 0x");
+            if (address < 16) Serial.print("0");
+            Serial.println(address, HEX);
+            deviceCount++;
+        }
+    }
+    
+    if (deviceCount == 0) {
+        Serial.println("No I2C devices found");
+    } else {
+        Serial.printf("Found %d I2C device(s)\n", deviceCount);
+    }
+}
+
+// Fungsi-fungsi lainnya tetap sama seperti sebelumnya
 void Gy25::setGyroRange(uint8_t range) {
     writeRegister(GYRO_CONFIG, range << 3);
     

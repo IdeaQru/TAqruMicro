@@ -4,80 +4,85 @@
 #include <Wire.h>
 #include <Arduino.h>
 
-class Gy25
-{
-public:
-    Gy25(uint8_t address = 0x68);
-    bool begin(int sda_pin, int scl_pin);
-    void update();
-    void calibrate();
+// Register addresses untuk MPU6050
+#define WHO_AM_I 0x75
+#define PWR_MGMT_1 0x6B
+#define SMPLRT_DIV 0x19
+#define CONFIG 0x1A
+#define GYRO_CONFIG 0x1B
+#define ACCEL_CONFIG 0x1C
+#define INT_STATUS 0x3A
+#define ACCEL_XOUT_H 0x3B
 
-    float getRoll() const { return roll; }
-    float getPitch() const { return pitch; }
-    float getYaw() const { return yaw; }
+// Kemungkinan address MPU6050
+#define MPU6050_ADDR_LOW 0x68   // AD0 = 0
+#define MPU6050_ADDR_HIGH 0x69  // AD0 = 1
 
-    // Additional functions
-    bool isDataReady();
-    void setGyroRange(uint8_t range);
-    void setAccelRange(uint8_t range);
+// Konstanta
+#define CALIBRATION_SAMPLES 1000
+#define COMPLEMENTARY_ALPHA 0.98
+#define RAD_TO_DEG 57.2958
 
+class Gy25 {
 private:
     uint8_t i2cAddress;
-    float roll, pitch, yaw;
-    unsigned long lastUpdate;
-
-    // Raw sensor data
+    bool addressAutoDetected;
+    
+    // Raw data
     int16_t accelX, accelY, accelZ;
     int16_t gyroX, gyroY, gyroZ;
     int16_t temperature;
-
+    
+    // Calculated angles
+    float roll, pitch, yaw;
+    
     // Calibration offsets
     float gyroXOffset, gyroYOffset, gyroZOffset;
     float accelXOffset, accelYOffset, accelZOffset;
-
-    // Scale factors
-    float gyroScale;
-    float accelScale;
-
-    // MPU6050 Register addresses
-    static const uint8_t PWR_MGMT_1 = 0x6B;
-    static const uint8_t PWR_MGMT_2 = 0x6C;
-    static const uint8_t SMPLRT_DIV = 0x19;
-    static const uint8_t CONFIG = 0x1A;
-    static const uint8_t GYRO_CONFIG = 0x1B;
-    static const uint8_t ACCEL_CONFIG = 0x1C;
-    static const uint8_t ACCEL_XOUT_H = 0x3B;
-    static const uint8_t ACCEL_XOUT_L = 0x3C;
-    static const uint8_t ACCEL_YOUT_H = 0x3D;
-    static const uint8_t ACCEL_YOUT_L = 0x3E;
-    static const uint8_t ACCEL_ZOUT_H = 0x3F;
-    static const uint8_t ACCEL_ZOUT_L = 0x40;
-    static const uint8_t TEMP_OUT_H = 0x41;
-    static const uint8_t TEMP_OUT_L = 0x42;
-    static const uint8_t GYRO_XOUT_H = 0x43;
-    static const uint8_t GYRO_XOUT_L = 0x44;
-    static const uint8_t GYRO_YOUT_H = 0x45;
-    static const uint8_t GYRO_YOUT_L = 0x46;
-    static const uint8_t GYRO_ZOUT_H = 0x47;
-    static const uint8_t GYRO_ZOUT_L = 0x48;
-    static const uint8_t WHO_AM_I = 0x75;
-    static const uint8_t INT_STATUS = 0x3A;
-
-    // Constants - Perbaikan: hapus constexpr dan gunakan static const
-    static const int CALIBRATION_SAMPLES = 1000;
-    const float COMPLEMENTARY_ALPHA = 0.98f;
-    const float PI_VALUE = 3.14159265359f;
-    // I2C communication functions
+    
+    // Scales
+    float gyroScale, accelScale;
+    
+    // Timing
+    unsigned long lastUpdate;
+    
+    // Private methods
     void writeRegister(uint8_t reg, uint8_t value);
     uint8_t readRegister(uint8_t reg);
     void readRawData();
-
-    // Calculation functions
     void calculateAngles();
-    float getAccelAngleX();
-    float getAccelAngleY();
     void updateGyroAngles(float dt);
     void complementaryFilter(float dt);
+    float getAccelAngleX();
+    float getAccelAngleY();
+    
+    // Auto-detect functions
+    uint8_t autoDetectAddress();
+    bool testAddress(uint8_t address);
+    void scanI2CDevices();
+    
+public:
+    Gy25(uint8_t address = 0x68);
+    bool begin(int sda_pin = 21, int scl_pin = 22);
+    void update();
+    void calibrate();
+    bool isDataReady();
+    void setGyroRange(uint8_t range);
+    void setAccelRange(uint8_t range);
+    
+    // Getters
+    float getRoll() { return roll; }
+    float getPitch() { return pitch; }
+    float getYaw() { return yaw; }
+    int16_t getAccelX() { return accelX; }
+    int16_t getAccelY() { return accelY; }
+    int16_t getAccelZ() { return accelZ; }
+    int16_t getGyroX() { return gyroX; }
+    int16_t getGyroY() { return gyroY; }
+    int16_t getGyroZ() { return gyroZ; }
+    int16_t getTemperature() { return temperature; }
+    uint8_t getAddress() { return i2cAddress; }
+    bool isAddressAutoDetected() { return addressAutoDetected; }
 };
 
 #endif

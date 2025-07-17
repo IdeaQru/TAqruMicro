@@ -25,9 +25,9 @@ GPS gps(GPS_RX_PIN, GPS_TX_PIN);
 LCDDisplay lcd(SDA_PIN, SCL_PIN);
 
 // WiFi credentials and backend URL
-const char *ssid = "NDtechnogy 5G";
-const char *password = "NDtech1234";
-const char *backendUrl = "http://192.168.1.18:3718/api/datasensor";
+const char *ssid = "Lab Robotika AI";
+const char *password = "labrobotm101";
+const char *backendUrl = "http://192.168.0.152:3718/api/datasensor";
 
 DataSender dataSender(ssid, password, backendUrl);
 
@@ -140,12 +140,12 @@ void setupMain()
     randomSeed(analogRead(0));
     
     // Initialize components
-    if (!imu.begin(SDA_PIN, SCL_PIN))
-    {
-        Serial.println("Gagal inisialisasi IMU!");
-        while (true)
-            ;
-    }
+    // if (!imu.begin(SDA_PIN, SCL_PIN))
+    // {
+    //     Serial.println("Gagal inisialisasi IMU!");
+    //     while (true)
+    //         ;
+    // }
 
     if (!compass.begin())
     {
@@ -161,7 +161,7 @@ void setupMain()
             ;
     }
 
-    gps.begin(GPS_BAUD_RATE);
+    // gps.begin(GPS_BAUD_RATE);
     dataSender.begin(); // Uncomment if WiFi data sending is needed
 
     // Calibrate compass
